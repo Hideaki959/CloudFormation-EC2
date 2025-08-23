@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create a public subnet in a VPC and EC2
+Parameters:
+  SubnetName:
+    Description: "Imput subnet name"
+    Type: "String"
+  InstanceName:
+    Description: "Imput instance name"
+    Type: "String"
+  InstanceType:
+    Description: "Select instance type"
+    AllowedValues:
+      - "t3.micro" #無料利用枠
+      - "t2.small" #無料じゃないから無料プランでは使えない
+    Type: "String"
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-default-x86_64'
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+      - Key: Name
+        Value: first-VPC
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC # VPCのIDを参照、↑で作った仕様
+      CidrBlock: 10.0.1.0/24 # サブネットのCIDRブロック
+      MapPublicIpOnLaunch: true # パブリックIPアドレスを自動的に割り当てる
+      AvailabilityZone: ap-northeast-1a # アベイラビリティゾーン
+      Tags:
+        - Key: Name
+          Value: !Ref SubnetName # サブネットの名前
+  MyEC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      Tags:
+        - Key: "Name"
+          Value: !Ref InstanceName
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "true"
+          DeleteOnTermination: true
+          DeviceIndex: "0"
+          SubnetId: !Ref PublicSubnet
+Outputs:
+  SubnetId:
+    Description: The ID of the subnet
+    Value: !Ref PublicSubnet
+    
