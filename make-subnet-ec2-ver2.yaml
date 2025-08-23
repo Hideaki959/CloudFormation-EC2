@@ -51,3 +51,4 @@ Outputs:
   SubnetId:
     Description: The ID of the subnet
     Value: !Ref PublicSubnet
+    
